@@ -5,7 +5,7 @@ import asyncio
 import logging
 from app.main import app
 from app.integrations.telegram_bot import TelegramBot
-from app.db.database import SessionLocal
+from app.db.database import get_database, connect_to_mongo
 import uvicorn
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,8 @@ async def start_telegram_bot():
     """Start Telegram bot in background"""
     global telegram_bot
     try:
-        db = SessionLocal()
+        await connect_to_mongo()
+        db = get_database()
         telegram_bot = TelegramBot(db=db)
         await telegram_bot.start()
         logger.info("Telegram bot started successfully")

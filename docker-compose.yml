@@ -1,18 +1,38 @@
 version: "3.8"
 
 services:
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=athlethia
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   athlethia:
     build: .
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:///./athlethia.db
+      - MONGODB_URL=mongodb://mongodb:27017
+      - MONGODB_DATABASE=athlethia
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - WHATSAPP_API_KEY=${WHATSAPP_API_KEY}
       - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
       - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN}
       - SECRET_KEY=${SECRET_KEY}
-    volumes:
-      - ./athlethia.db:/app/athlethia.db
+    depends_on:
+      mongodb:
+        condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  mongodb_data:

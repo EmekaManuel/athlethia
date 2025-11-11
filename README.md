@@ -38,8 +38,7 @@ A comprehensive, AI-driven link scanning service that detects scam websites and 
                                               ▼
                                        ┌──────────────┐
                                        │  Database    │
-                                       │  (SQLite/    │
-                                       │  PostgreSQL) │
+                                       │  (MongoDB)   │
                                        └──────────────┘
 ```
 
@@ -48,6 +47,7 @@ A comprehensive, AI-driven link scanning service that detects scam websites and 
 ### Prerequisites
 
 - Python 3.9+
+- MongoDB 4.4+ (local installation or Docker)
 - WhatsApp Business API credentials (or use WhatsApp Web API)
 - Telegram Bot Token
 - OpenAI API key (optional, for advanced AI analysis)
@@ -98,7 +98,8 @@ WHATSAPP_API_KEY=your_whatsapp_api_key
 WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
 
 # Database
-DATABASE_URL=sqlite:///./athlethia.db
+MONGODB_URL=mongodb://localhost:27017
+MONGODB_DATABASE=athlethia
 
 # Security
 SECRET_KEY=your_secret_key_here

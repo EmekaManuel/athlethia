@@ -3,9 +3,9 @@ Main FastAPI application
 """
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from contextlib import asynccontextmanager
 from app.config import settings
-from app.db.database import get_db, init_db
+from app.db.database import connect_to_mongo, close_mongo_connection, init_db
 from app.api import router as api_router
 from app.integrations.whatsapp import router as whatsapp_router
 import logging
@@ -18,15 +18,26 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# Initialize database
-init_db()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup/shutdown"""
+    # Startup
+    await connect_to_mongo()
+    await init_db()
+    logger.info("MongoDB connected and initialized")
+    yield
+    # Shutdown
+    await close_mongo_connection()
+    logger.info("MongoDB connection closed")
 
 app = FastAPI(
     title="Athlethia - AI-Powered Link Scam Detection",
     description="A comprehensive service for detecting scam websites with WhatsApp and Telegram integration",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # CORS middleware

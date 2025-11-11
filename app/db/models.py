@@ -1,57 +1,123 @@
 """
-Database models
+MongoDB document models and schemas
 """
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text
-from sqlalchemy.sql import func
-from app.db.database import Base
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, List, Annotated
+from datetime import datetime, timezone
+from bson import ObjectId
 
 
-class ScanResult(Base):
+class PyObjectId(str):
+    """Custom ObjectId for Pydantic v2"""
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source_type, handler):
+        try:
+            from pydantic_core import core_schema
+            return core_schema.no_info_after_validator_function(
+                cls.validate,
+                core_schema.str_schema(),
+                serialization=core_schema.to_ser_schema(core_schema.str_schema())
+            )
+        except ImportError:
+            # Fallback for older Pydantic versions
+            return handler(str)
+    
+    @classmethod
+    def validate(cls, v):
+        if isinstance(v, ObjectId):
+            return str(v)
+        if isinstance(v, str) and ObjectId.is_valid(v):
+            return v
+        raise ValueError("Invalid ObjectId")
+
+
+class ScanResult(BaseModel):
     """Model for storing link scan results"""
-    __tablename__ = "scan_results"
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    url: str
+    is_scam: bool = False
+    scam_score: float = 0.0
+    detection_reasons: Optional[str] = None
+    domain: Optional[str] = None
+    scan_timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    class Config:
+        populate_by_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create from dictionary"""
+        if "_id" in data:
+            data["id"] = str(data["_id"])
+        return cls(**data)
     
-    id = Column(Integer, primary_key=True, index=True)
-    url = Column(String, index=True, nullable=False)
-    is_scam = Column(Boolean, default=False, nullable=False)
-    scam_score = Column(Float, default=0.0, nullable=False)
-    detection_reasons = Column(Text, nullable=True)
-    domain = Column(String, index=True, nullable=True)
-    scan_timestamp = Column(DateTime(timezone=True), server_default=func.now())
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    def __repr__(self):
-        return f"<ScanResult(url={self.url}, is_scam={self.is_scam}, score={self.scam_score})>"
+    def to_dict(self):
+        """Convert to dictionary for MongoDB"""
+        data = self.model_dump(by_alias=True, exclude={"id"})
+        if hasattr(self, "id") and self.id:
+            data["_id"] = ObjectId(str(self.id))
+        return data
 
 
-class KnownScam(Base):
+class KnownScam(BaseModel):
     """Model for storing known scam domains"""
-    __tablename__ = "known_scams"
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    domain: str
+    url_pattern: Optional[str] = None
+    scam_type: Optional[str] = None  # phishing, fake_shop, crypto_scam, etc.
+    reported_count: int = 1
+    first_reported: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_reported: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    verified: bool = False
+
+    class Config:
+        populate_by_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create from dictionary"""
+        if "_id" in data:
+            data["id"] = str(data["_id"])
+        return cls(**data)
     
-    id = Column(Integer, primary_key=True, index=True)
-    domain = Column(String, unique=True, index=True, nullable=False)
-    url_pattern = Column(String, nullable=True)
-    scam_type = Column(String, nullable=True)  # phishing, fake_shop, crypto_scam, etc.
-    reported_count = Column(Integer, default=1)
-    first_reported = Column(DateTime(timezone=True), server_default=func.now())
-    last_reported = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    verified = Column(Boolean, default=False)
-    
-    def __repr__(self):
-        return f"<KnownScam(domain={self.domain}, type={self.scam_type})>"
+    def to_dict(self):
+        """Convert to dictionary for MongoDB"""
+        data = self.model_dump(by_alias=True, exclude={"id"})
+        if hasattr(self, "id") and self.id:
+            data["_id"] = ObjectId(str(self.id))
+        return data
 
 
-class UserReport(Base):
+class UserReport(BaseModel):
     """Model for storing user reports"""
-    __tablename__ = "user_reports"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    url = Column(String, nullable=False)
-    reported_by = Column(String, nullable=True)  # WhatsApp/Telegram user ID
-    platform = Column(String, nullable=True)  # whatsapp, telegram
-    reason = Column(Text, nullable=True)
-    reported_at = Column(DateTime(timezone=True), server_default=func.now())
-    reviewed = Column(Boolean, default=False)
-    
-    def __repr__(self):
-        return f"<UserReport(url={self.url}, platform={self.platform})>"
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    url: str
+    reported_by: Optional[str] = None  # WhatsApp/Telegram user ID
+    platform: Optional[str] = None  # whatsapp, telegram
+    reason: Optional[str] = None
+    reported_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    reviewed: bool = False
 
+    class Config:
+        populate_by_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+        
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create from dictionary"""
+        if "_id" in data:
+            data["id"] = str(data["_id"])
+        return cls(**data)
+    
+    def to_dict(self):
+        """Convert to dictionary for MongoDB"""
+        data = self.model_dump(by_alias=True, exclude={"id"})
+        if hasattr(self, "id") and self.id:
+            data["_id"] = ObjectId(str(self.id))
+        return data

@@ -16,8 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Initialize database
-RUN python -m app.db.init_db
+# Note: Database initialization happens at runtime
 
 # Expose port
 EXPOSE 8000

@@ -14,18 +14,26 @@ Get Athlethia up and running in 5 minutes!
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Create .env file
+# 2. Start MongoDB (if not already running)
+# Option 1: Using Docker
+docker run -d -p 27017:27017 --name mongodb mongo:7.0
+
+# Option 2: Using local MongoDB installation
+# Make sure MongoDB is installed and running on localhost:27017
+
+# 3. Create .env file
 cat > .env << EOF
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
 WHATSAPP_API_KEY=your_whatsapp_api_key_here
 WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id_here
-DATABASE_URL=sqlite:///./athlethia.db
+MONGODB_URL=mongodb://localhost:27017
+MONGODB_DATABASE=athlethia
 EOF
 
-# 3. Initialize database
+# 4. Initialize database (creates indexes)
 python -m app.db.init_db
 
-# 4. Run the application
+# 5. Run the application
 python run.py
 ```
 

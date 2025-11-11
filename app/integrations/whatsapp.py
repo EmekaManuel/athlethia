@@ -8,8 +8,7 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 from app.config import settings
 from app.services.scam_detector import ScamDetector
-from app.db.database import get_db
-from sqlalchemy.orm import Session
+from app.db.database import get_database, connect_to_mongo
 import httpx
 import json
 
@@ -21,8 +20,8 @@ router = APIRouter()
 class WhatsAppIntegration:
     """WhatsApp Business API integration"""
     
-    def __init__(self, db: Session):
-        self.db = db
+    def __init__(self, db=None):
+        self.db = db  # MongoDB database instance
         self.api_key = settings.whatsapp_api_key
         self.phone_number_id = settings.whatsapp_phone_number_id
         self.verify_token = settings.whatsapp_verify_token
@@ -172,15 +171,19 @@ class WhatsAppIntegration:
 
 # Webhook endpoints
 @router.get("/webhook")
-async def whatsapp_webhook_verify(request: Request, db: Session = Depends(get_db)):
+async def whatsapp_webhook_verify(request: Request):
     """WhatsApp webhook verification endpoint"""
+    await connect_to_mongo()
+    db = get_database()
     whatsapp = WhatsAppIntegration(db=db)
     return await whatsapp.verify_webhook(request)
 
 
 @router.post("/webhook")
-async def whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
+async def whatsapp_webhook(request: Request):
     """WhatsApp webhook handler"""
+    await connect_to_mongo()
+    db = get_database()
     whatsapp = WhatsAppIntegration(db=db)
     return await whatsapp.handle_webhook(request)
 

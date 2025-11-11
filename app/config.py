@@ -16,7 +16,8 @@ class Settings(BaseSettings):
     whatsapp_verify_token: Optional[str] = "athlethia_verify_token"
     
     # Database
-    database_url: str = "sqlite:///./athlethia.db"
+    mongodb_url: str = "mongodb://localhost:27017"
+    mongodb_database: str = "athlethia"
     
     # Security
     secret_key: str = "change-this-in-production"

@@ -11,8 +11,7 @@ from datetime import datetime
 import ssl
 import socket
 from app.config import settings
-from app.db.models import KnownScam
-from sqlalchemy.orm import Session
+from app.db.models import KnownScam as KnownScamModel
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,8 +37,8 @@ class ScamDetector:
     # Known legitimate TLDs
     LEGITIMATE_TLDS = ['com', 'org', 'net', 'edu', 'gov', 'co.uk', 'de', 'fr', 'au']
     
-    def __init__(self, db: Optional[Session] = None):
-        self.db = db
+    def __init__(self, db=None):
+        self.db = db  # MongoDB database instance
         self.client = httpx.AsyncClient(timeout=10.0, follow_redirects=True)
     
     async def detect_scam(self, url: str) -> Dict:
@@ -54,15 +53,15 @@ class ScamDetector:
             url = self._normalize_url(url)
             
             # Check known scams database first
-            known_scam = self._check_known_scams(url)
+            known_scam = await self._check_known_scams(url)
             if known_scam:
                 return {
                     'is_scam': True,
                     'scam_score': 1.0,
-                    'reasons': [f"Known scam domain: {known_scam.domain}"],
+                    'reasons': [f"Known scam domain: {known_scam.get('domain', 'unknown')}"],
                     'details': {
-                        'scam_type': known_scam.scam_type,
-                        'verified': known_scam.verified
+                        'scam_type': known_scam.get('scam_type'),
+                        'verified': known_scam.get('verified', False)
                     }
                 }
             
@@ -131,7 +130,7 @@ class ScamDetector:
             url = 'https://' + url
         return url
     
-    def _check_known_scams(self, url: str) -> Optional[KnownScam]:
+    async def _check_known_scams(self, url: str) -> Optional[dict]:
         """Check if URL is in known scams database"""
         if not self.db:
             return None
@@ -140,9 +139,7 @@ class ScamDetector:
         domain = parsed.netloc.lower()
         
         # Check exact domain match
-        known = self.db.query(KnownScam).filter(
-            KnownScam.domain == domain
-        ).first()
+        known = await self.db.known_scams.find_one({"domain": domain})
         
         if known:
             return known
@@ -150,9 +147,7 @@ class ScamDetector:
         # Check domain without www
         if domain.startswith('www.'):
             domain_no_www = domain[4:]
-            known = self.db.query(KnownScam).filter(
-                KnownScam.domain == domain_no_www
-            ).first()
+            known = await self.db.known_scams.find_one({"domain": domain_no_www})
             if known:
                 return known
         

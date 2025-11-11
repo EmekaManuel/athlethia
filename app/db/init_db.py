@@ -1,16 +1,15 @@
 """
-Initialize database tables
+Initialize MongoDB database
 """
-from app.db.database import engine, Base
-from app.db.models import ScanResult, KnownScam, UserReport
+import asyncio
+from app.db.database import init_db
 
 
-def init_db():
-    """Create all database tables"""
-    Base.metadata.create_all(bind=engine)
+async def main():
+    """Initialize database"""
+    await init_db()
     print("Database initialized successfully!")
 
 
 if __name__ == "__main__":
-    init_db()
-
+    asyncio.run(main())

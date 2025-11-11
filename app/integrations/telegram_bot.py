@@ -9,8 +9,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from app.config import settings
 from app.services.scam_detector import ScamDetector
-from app.db.database import get_db
-from sqlalchemy.orm import Session
+from app.db.database import get_database, connect_to_mongo
 import httpx
 
 logger = logging.getLogger(__name__)
@@ -19,8 +18,8 @@ logger = logging.getLogger(__name__)
 class TelegramBot:
     """Telegram bot for link scanning"""
     
-    def __init__(self, db: Session):
-        self.db = db
+    def __init__(self, db=None):
+        self.db = db  # MongoDB database instance
         self.bot_token = settings.telegram_bot_token
         if not self.bot_token:
             logger.warning("Telegram bot token not configured")
