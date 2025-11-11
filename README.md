@@ -127,13 +127,6 @@ Add the bot to your Telegram group or chat, and it will automatically scan links
 pytest tests/
 ```
 
-## 📊 Grant Application Highlights
-
-- **Innovation**: AI-powered multi-signal detection approach
-- **Impact**: Protects users from financial fraud and phishing
-- **Scalability**: Built for high-volume usage
-- **Open Source**: Contributes to cybersecurity community
-- **Multi-Platform**: Reaches users where they communicate
 
 ## 📄 License
 
