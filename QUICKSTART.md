@@ -5,21 +5,20 @@ Get Athlethia up and running in 5 minutes!
 ## Prerequisites
 
 - Python 3.9+
+- MongoDB (see [LOCAL_SETUP.md](LOCAL_SETUP.md) for installation instructions)
 - Telegram Bot Token (optional, for Telegram integration)
 - WhatsApp Business API credentials (optional, for WhatsApp integration)
 
 ## Installation
 
+### Option 1: Using Docker (Recommended for quick start)
+
 ```bash
 # 1. Install dependencies
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
-# 2. Start MongoDB (if not already running)
-# Option 1: Using Docker
+# 2. Start MongoDB with Docker
 docker run -d -p 27017:27017 --name mongodb mongo:7.0
-
-# Option 2: Using local MongoDB installation
-# Make sure MongoDB is installed and running on localhost:27017
 
 # 3. Create .env file
 cat > .env << EOF
@@ -30,11 +29,30 @@ MONGODB_URL=mongodb://localhost:27017
 MONGODB_DATABASE=athlethia
 EOF
 
-# 4. Initialize database (creates indexes)
-python -m app.db.init_db
+# 4. Run the application
+python3 run.py
+```
 
-# 5. Run the application
-python run.py
+### Option 2: Without Docker (Local Setup)
+
+For detailed instructions on running without Docker, see **[LOCAL_SETUP.md](LOCAL_SETUP.md)**.
+
+Quick steps:
+```bash
+# 1. Install dependencies
+pip3 install -r requirements.txt
+
+# 2. Install and start MongoDB locally (see LOCAL_SETUP.md)
+
+# 3. Create .env file (see LOCAL_SETUP.md for full template)
+
+# 4. Run the application
+python3 run.py
+```
+
+**Note:** The database will be automatically initialized when you start the app. You can also initialize it manually:
+```bash
+python3 -m app.db.init_db
 ```
 
 ## Get Telegram Bot Token
@@ -68,6 +86,7 @@ curl -X POST "http://localhost:8000/api/v1/scan" \
 
 ## Next Steps
 
+- See [LOCAL_SETUP.md](LOCAL_SETUP.md) for detailed local development setup (without Docker)
 - See [DEPLOYMENT.md](DEPLOYMENT.md) for production deployment
 - See [README.md](README.md) for full documentation
 - See [GRANT_PROPOSAL.md](GRANT_PROPOSAL.md) for grant application details
